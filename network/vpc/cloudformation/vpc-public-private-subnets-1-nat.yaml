@@ -1,0 +1,198 @@
+Resources:
+  vpcWith1Nat:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.1.0.0/16
+      EnableDnsSupport: 'true'
+      EnableDnsHostnames: 'true'
+      Tags:
+        - Key: Environment
+          Value: production
+        - Key: Name
+          Value: vpc-with-1-nat
+  publicSubnet1a:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref vpcWith1Nat
+      CidrBlock: 10.1.0.0/19
+      AvailabilityZone: "us-east-1a"
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Environment
+          Value: production
+        - Key: Name
+          Value: public-subnet-us-east-1a
+  publicSubnet1b:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref vpcWith1Nat
+      CidrBlock: 10.1.32.0/19
+      AvailabilityZone: "us-east-1b"
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Environment
+          Value: production
+        - Key: Name
+          Value: public-subnet-us-east-1b
+  publicSubnet1c:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref vpcWith1Nat
+      CidrBlock: 10.1.64.0/19
+      AvailabilityZone: "us-east-1c"
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Environment
+          Value: production
+        - Key: Name
+          Value: public-subnet-us-east-1c
+  privateSubnet1a:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref vpcWith1Nat
+      CidrBlock: 10.1.96.0/19
+      AvailabilityZone: "us-east-1a"
+      Tags:
+        - Key: Environment
+          Value: production
+        - Key: Name
+          Value: private-subnet-us-east-1a
+  privateSubnet1b:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref vpcWith1Nat
+      CidrBlock: 10.1.128.0/19
+      AvailabilityZone: "us-east-1b"
+      Tags:
+        - Key: Environment
+          Value: production
+        - Key: Name
+          Value: private-subnet-us-east-1b
+  privateSubnet1c:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref vpcWith1Nat
+      CidrBlock: 10.1.160.0/19
+      AvailabilityZone: "us-east-1c"
+      Tags:
+        - Key: Environment
+          Value: production
+        - Key: Name
+          Value: private-subnet-us-east-1c
+  internetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Environment
+          Value: production
+  elasticIp:
+    Type: AWS::EC2::EIP
+    Properties:
+      Tags:
+        - Key: Name
+          Value: elastic-ip-1
+  natGateway:
+    Type: AWS::EC2::NatGateway
+    DependsOn: elasticIp
+    Properties:
+      AllocationId: !GetAtt elasticIp.AllocationId
+      SubnetId: !Ref publicSubnet1a
+      Tags:
+        - Key: Name
+          Value: nat-gateway
+  igwVPCAssociation:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref internetGateway
+      VpcId: !Ref vpcWith1Nat
+  defaultRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref vpcWith1Nat
+      Tags:
+        - Key: Name
+          Value: default-route-table
+        - Key: Environment
+          Value: production
+  privateRouteTable1a:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref vpcWith1Nat
+      Tags:
+        - Key: Name
+          Value: private-route-table-1a
+        - Key: Environment
+          Value: production
+  privateRouteTable1b:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref vpcWith1Nat
+      Tags:
+        - Key: Name
+          Value: private-route-table-1b
+        - Key: Environment
+          Value: production
+  privateRouteTable1c:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref vpcWith1Nat
+      Tags:
+        - Key: Name
+          Value: private-route-table-1c
+        - Key: Environment
+          Value: production
+  routeIGW:
+    Type: AWS::EC2::Route
+    DependsOn: igwVPCAssociation
+    Properties:
+      RouteTableId: !Ref defaultRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref internetGateway
+  routeNatgw1a:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref privateRouteTable1a
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref natGateway
+  routeNatgw1b:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref privateRouteTable1b
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref natGateway
+  routeNatgw1c:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref privateRouteTable1c
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref natGateway
+  routeTableAssoc1a:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref publicSubnet1a
+      RouteTableId: !Ref defaultRouteTable
+  routeTableAssoc1b:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref publicSubnet1b
+      RouteTableId: !Ref defaultRouteTable
+  routeTableAssoc1c:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref publicSubnet1c
+      RouteTableId: !Ref defaultRouteTable
+  privateRouteTableAssoc1a:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref privateSubnet1a
+      RouteTableId: !Ref privateRouteTable1a
+  privateRouteTableAssoc1b:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref privateSubnet1b
+      RouteTableId: !Ref privateRouteTable1b
+  privateRouteTableAssoc1c:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref privateSubnet1c
+      RouteTableId: !Ref privateRouteTable1c
